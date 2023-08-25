@@ -3,13 +3,12 @@ const express = require("express");
 const https = require("node:https");
 const app = express();
 const cors = require("cors");
-const { router } = require("./routes/index");
 const { db } = require("./db");
 app.use(express.json());
 app.use(cors());
 
 const fs = require("fs");
-const { InvoiceModel, UserModel } = require("./models");
+const { router } = require("./routes");
 
 app.use("/api", router);
 const options = {
@@ -17,7 +16,7 @@ const options = {
   cert: fs.readFileSync("certificate.pem"),
 };
 
-const PORT_SSL = 400;
+const PORT_SSL = 443;
 
 const server = https.createServer(options, app);
 server.listen(PORT_SSL, () => {
