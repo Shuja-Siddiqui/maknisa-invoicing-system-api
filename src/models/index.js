@@ -1,4 +1,4 @@
-const InvoiceModel = require("./invoice.model");
+const InvoiceModal = require("./invoice.model");
 const UserModel = require("./user.model");
 
-module.exports = { InvoiceModel, UserModel };
+module.exports = { InvoiceModal, UserModel };
