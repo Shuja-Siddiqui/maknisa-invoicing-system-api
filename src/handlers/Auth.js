@@ -2,16 +2,19 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("../models");
 const Response = require("./Response");
+const nodemailer = require("nodemailer");
+const { findOneAndUpdate } = require("../models/user.model");
 
 class Auth extends Response {
   registerUSer = async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { username, password, userEmail } = req.body;
       console.log(username, password, "body");
       const hashPassword = await bcrypt.hash(password, 10);
       const user = new UserModel({
         username: username,
         password: hashPassword,
+        email: userEmail,
       });
       await user.save();
       const token = jwt.sign(
@@ -117,61 +120,68 @@ class Auth extends Response {
       });
     }
   };
-  changePassword = async (req, res) => {
+
+  forgotPassword = async (req, res) => {
+    // Pass Genrator
+    const generateRandomPassword = (length = 10) => {
+      const charset =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let password = "";
+
+      for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charset.length);
+        password += charset[randomIndex];
+      }
+
+      return password;
+    };
+    // Nodemailer
+    const sendPasswordResetEmail = async (userEmail, newPassword) => {
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: true,
+        auth: {
+          user: "muhammadnomi425@gmail.com",
+          pass: "landonMicrosoft123",
+        },
+        tls: {
+          ciphers: "SSLv3",
+        },
+      });
+
+      const mailOptions = {
+        from: "your@gmail.com",
+        to: userEmail,
+        subject: "Password Reset",
+        text: `Your new password: ${newPassword}`,
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log("Password reset email sent successfully");
+      } catch (error) {
+        console.error("Error sending password reset email:", error);
+        throw error;
+      }
+    };
+    const { userEmail } = req.body;
+
     try {
-      const { oldPass, newPass, confirmPass, username } = req.body;
-      if (!oldPass || !newPass || !confirmPass) {
-        return res.status(400).send({
-          message: "All Fields are required",
-          status: 400,
-        });
+      const user = await UserModel.findOne({ email: userEmail });
+
+      if (user) {
+        const newPassword = generateRandomPassword();
+        user.password = newPassword;
+        await user.save();
+        await sendPasswordResetEmail(userEmail, newPassword);
+        return res.json({ message: "Password reset email sent successfully" });
       } else {
-        if (newPass !== confirmPass) {
-          return res.status(404).send({
-            message: "New and Confrim passwords do not match",
-            status: 404,
-          });
-        } else {
-          const user = await UserModel.findOne({
-            username: username,
-          });
-          if (!user) {
-            return res.status(404).send({
-              message: "User not found under this username",
-              status: 404,
-            });
-          } else {
-            const isMatch = await bcrypt.compare(oldPass, user.password);
-            if (!isMatch) {
-              return res.status(400).send({
-                data: null,
-                message: "saved and old password do not match",
-              });
-            } else {
-              const hashPassword = await bcrypt.hash(newPass, 10);
-              await UserModel.updateOne(
-                { username },
-                {
-                  $set: {
-                    password: hashPassword,
-                  },
-                }
-              );
-              return res.status(201).send({
-                message: "Password is Updated",
-                status: 201,
-                user,
-              });
-            }
-          }
-        }
+        return res.status(404).json({ message: "User not found" });
       }
     } catch (err) {
-      console.log(err);
-      return this.sendResponse(res, {
-        message: "Internal server error",
-        status: 500,
-      });
+      console.error(err);
+      return res.status(500).json({ message: "An error occurred" });
     }
   };
 }
