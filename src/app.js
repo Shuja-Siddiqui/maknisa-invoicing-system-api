@@ -1,30 +1,26 @@
 require("dotenv").config();
 const express = require("express");
-const https = require("node:https");
 const app = express();
 const cors = require("cors");
 const { db } = require("./db");
 app.use(express.json());
 app.use(cors());
-
-const fs = require("fs");
 const { router } = require("./routes");
 
 app.use("/api", router);
-const options = {
-  key: fs.readFileSync("key.pem"),
-  cert: fs.readFileSync("certificate.pem"),
-};
 
-const PORT_SSL = 443;
-
-const server = https.createServer(options, app);
-server.listen(PORT_SSL, () => {
-  db.on("error", (err) => {
-    console.log(err);
-  });
-  db.on("open", () => {
-    console.log("Database Connected");
-    console.log(`Server Started: https://localhost`);
-  });
+db.on("error", (err) => {
+  console.log(err);
 });
+db.on("open", () => {
+  console.log("Database Connected");
+});
+
+if (process.env.NODE_ENV === "local") {
+  app.listen(5000, () => {
+    console.log("server started at port 5000");
+  });
+}
+module.exports = {
+  app,
+};
