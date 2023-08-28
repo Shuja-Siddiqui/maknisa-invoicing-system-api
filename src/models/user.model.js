@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 
-const userModel = new mongoose.Schema({
-  username: String,
-  password: String,
-  createdAt: { type: Date, default: Date.now() },
-  updatedAt: { type: Date, default: Date.now() },
-});
+const userModel = new mongoose.Schema(
+  {
+    username: String,
+    password: String,
+    email: String,
+  },
+  { timestamps: true }
+);
 
 const User = mongoose.model("User", userModel);
 

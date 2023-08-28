@@ -31,6 +31,7 @@ class Invoice extends Response {
         newInvoice,
       });
     } catch (err) {
+      console.log(err);
       return this.sendResponse(res, {
         message: "Internal server error",
         status: 500,
@@ -39,13 +40,16 @@ class Invoice extends Response {
   };
   getInvoices = async (req, res) => {
     try {
-      const invoices = await InvoiceModal.find({ completed: true });
+      const invoices = await InvoiceModal.find({ completed: true }).sort({
+        updatedAt: -1,
+      });
       return this.sendResponse(res, {
         message: "All Completed Invoices Fetched",
         status: 201,
         invoices,
       });
     } catch (err) {
+      console.log(err);
       return this.sendResponse(res, {
         message: "Error Fetching Invoices",
         status: 500,
@@ -56,13 +60,16 @@ class Invoice extends Response {
 
   getDrafts = async (req, res) => {
     try {
-      const invoices = await InvoiceModal.find({ completed: false });
+      const invoices = await InvoiceModal.find({ completed: false }).sort({
+        updatedAt: -1,
+      });
       return this.sendResponse(res, {
         message: "All Drafts Invoices Fetched",
         status: 201,
         invoices,
       });
     } catch (err) {
+      console.log(err);
       return this.sendResponse(res, {
         message: "Error Fetching Drafts",
         status: 500,
@@ -89,6 +96,7 @@ class Invoice extends Response {
         invoice,
       });
     } catch (err) {
+      console.log(err);
       return this.sendResponse(res, {
         message: "Error Fetching Invoice",
         status: 500,
@@ -115,6 +123,7 @@ class Invoice extends Response {
         invoice,
       });
     } catch (err) {
+      console.log(err);
       return this.sendResponse(res, {
         message: "Error Fetching Invoice",
         status: 500,
