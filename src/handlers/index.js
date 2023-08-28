@@ -1,3 +1,4 @@
 const { Auth } = require("./Auth");
 
-module.exports = { Auth };
+const { Invoice } = require("./Inovice");
+module.exports = { Auth, Invoice };

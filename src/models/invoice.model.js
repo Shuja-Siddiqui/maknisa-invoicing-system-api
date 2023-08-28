@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const invoiceModel = new mongoose.Schema(
   {
     client_name: String,
+    invoice_id: Number,
     location: {
       details: String,
       area: String,
@@ -13,6 +14,8 @@ const invoiceModel = new mongoose.Schema(
     estimate_time: String,
     terms: String,
     discount: Number,
+    completed: { type: Boolean, default: false },
+    status: { type: String, default: "Pending" },
     items: [
       {
         description: String,
@@ -29,6 +32,6 @@ const invoiceModel = new mongoose.Schema(
   }
 );
 
-const Invoice = mongoose.model("Invoice", invoiceModel);
+const InvoiceModal = mongoose.model("Invoice", invoiceModel);
 
-module.exports = Invoice;
+module.exports = InvoiceModal;
