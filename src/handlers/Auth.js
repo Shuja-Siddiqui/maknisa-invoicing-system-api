@@ -109,10 +109,6 @@ class Auth extends Response {
       );
       req.token = token;
       next();
-      // return this.sendResponse(res, {
-      //   data: { token },
-      //   status: 202,
-      // });
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
@@ -184,6 +180,7 @@ class Auth extends Response {
       return res.status(500).json({ message: "An error occurred" });
     }
   };
+
 }
 
 module.exports = {
