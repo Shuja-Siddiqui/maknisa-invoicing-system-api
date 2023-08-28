@@ -22,14 +22,14 @@ class Auth extends Response {
         process.env.SECRET_KEY,
         { expiresIn: "2h" }
       );
-      console.log(token);
-      return this.sendResponse(res, {
+      req.token = token;
+      return this.sendResponse(res, req, {
         message: "User Added!",
         data: user,
         status: 201,
       });
     } catch (err) {
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "User Not Added!",
         data: err,
         status: 500,
@@ -46,13 +46,13 @@ class Auth extends Response {
           passMatch = await bcrypt.compare(password, user.password);
         }
       } else {
-        return this.sendResponse(res, {
+        return this.sendResponse(res, req, {
           message: "No User exist with this username",
           status: 404,
         });
       }
       if (!passMatch) {
-        return this.sendResponse(res, {
+        return this.sendResponse(res, req, {
           message: "Check Your Password Again Please",
           status: 404,
         });
@@ -60,7 +60,7 @@ class Auth extends Response {
         const token = jwt.sign({ username: username }, process.env.SECRET_KEY, {
           expiresIn: "10m",
         });
-        return this.sendResponse(res, {
+        return this.sendResponse(res, req, {
           message: "logged IN",
           data: { token, user },
           status: 202,
@@ -68,24 +68,23 @@ class Auth extends Response {
       }
     } catch (err) {
       console.log(err);
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Internal server error!",
         data: err,
         status: 500,
       });
     }
   };
-  refresh = async (req, res) => {
+  refresh = async (req, res, next) => {
     try {
       const gettoken = req.headers.authorization?.split(" ")[1];
       if (!gettoken) {
-        return this.sendResponse(res, {
+        return this.sendResponse(res, req, {
           message: "Token is Missing",
-          data: err,
           status: 403,
         });
       }
-      const decode = jwt.verify(
+      const decoded = jwt.verify(
         gettoken,
         process.env.SECRET_KEY,
         (err, decoded) => {
@@ -98,7 +97,7 @@ class Auth extends Response {
         }
       );
       if (decoded?.error) {
-        return this.sendResponse(res, {
+        return this.sendResponse(res, req, {
           message: "Unable to authorize!",
           status: 400,
         });
@@ -108,13 +107,11 @@ class Auth extends Response {
         process.env.SECRET_KEY,
         { expiresIn: "2h" }
       );
-      return this.sendResponse(res, {
-        data: { token },
-        status: 202,
-      });
+      req.token = token;
+      next();
     } catch (err) {
       console.log(err);
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Internal server error",
         status: 202,
       });
@@ -137,21 +134,20 @@ class Auth extends Response {
     };
     // Nodemailer
     const sendPasswordResetEmail = async (userEmail, newPassword) => {
-      const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: true,
+      let testAccount = await nodemailer.createTestAccount();
+
+      // create reusable transporter object using the default SMTP transport
+      let transporter = nodemailer.createTransport({
+        host: "mail.consoledot.com",
+        port: 465,
+        secure: true, // true for 465, false for other ports
         auth: {
-          user: "muhammadnomi425@gmail.com",
-          pass: "landonMicrosoft123",
-        },
-        tls: {
-          ciphers: "SSLv3",
+          user: "noreply@consoledot.com", // generated ethereal user
+          pass: "QWerTY@#$2", // generated ethereal password
         },
       });
-
       const mailOptions = {
-        from: "your@gmail.com",
+        from: "noreply@consoledot.com",
         to: userEmail,
         subject: "Password Reset",
         text: `Your new password: ${newPassword}`,
@@ -184,6 +180,7 @@ class Auth extends Response {
       return res.status(500).json({ message: "An error occurred" });
     }
   };
+
 }
 
 module.exports = {

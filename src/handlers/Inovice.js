@@ -25,14 +25,14 @@ class Invoice extends Response {
         status,
       });
       await newInvoice.save();
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Invoice Saved",
         status: 201,
         newInvoice,
       });
     } catch (err) {
       console.log(err);
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Internal server error",
         status: 500,
       });
@@ -43,14 +43,14 @@ class Invoice extends Response {
       const invoices = await InvoiceModal.find({ completed: true }).sort({
         updatedAt: -1,
       });
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "All Completed Invoices Fetched",
         status: 201,
         invoices,
       });
     } catch (err) {
       console.log(err);
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Error Fetching Invoices",
         status: 500,
         data: null,
@@ -63,14 +63,14 @@ class Invoice extends Response {
       const invoices = await InvoiceModal.find({ completed: false }).sort({
         updatedAt: -1,
       });
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "All Drafts Invoices Fetched",
         status: 201,
-        invoices,
+        data: invoices,
       });
     } catch (err) {
       console.log(err);
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Error Fetching Drafts",
         status: 500,
         data: null,
@@ -90,14 +90,14 @@ class Invoice extends Response {
         });
       }
 
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Invoice Fetched Successfully",
         status: 200,
         invoice,
       });
     } catch (err) {
       console.log(err);
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Error Fetching Invoice",
         status: 500,
         data: null,
@@ -110,21 +110,21 @@ class Invoice extends Response {
       const invoice = await InvoiceModal.findOneAndDelete({ _id: invoiceId });
 
       if (!invoice) {
-        return this.sendResponse(res, {
+        return this.sendResponse(res, req, {
           message: "Invoice not found",
           status: 404,
           data: null,
         });
       }
 
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Invoice Deleted Successfully",
         status: 200,
         invoice,
       });
     } catch (err) {
       console.log(err);
-      return this.sendResponse(res, {
+      return this.sendResponse(res, req, {
         message: "Error Fetching Invoice",
         status: 500,
         data: null,
