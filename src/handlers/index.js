@@ -1,4 +1,5 @@
 const { Auth } = require("./Auth");
 
 const { Invoice } = require("./Inovice");
-module.exports = { Auth, Invoice };
+const { Files } = require("./File");
+module.exports = { Auth, Invoice, Files };

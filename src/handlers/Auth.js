@@ -4,24 +4,23 @@ const { UserModel } = require("../models");
 const Response = require("./Response");
 const nodemailer = require("nodemailer");
 const { findOneAndUpdate } = require("../models/user.model");
+const User = require("../models/user.model");
 
 class Auth extends Response {
   registerUSer = async (req, res) => {
     try {
-      const { username, password, userEmail } = req.body;
-      console.log(username, password, "body");
+      const { email, password, userEmail } = req.body;
+
       const hashPassword = await bcrypt.hash(password, 10);
       const user = new UserModel({
-        username: username,
+        email: email,
         password: hashPassword,
         email: userEmail,
       });
       await user.save();
-      const token = jwt.sign(
-        { username: user.username },
-        process.env.SECRET_KEY,
-        { expiresIn: "2h" }
-      );
+      const token = jwt.sign({ email: user.email }, process.env.SECRET_KEY, {
+        expiresIn: "2h",
+      });
       req.token = token;
       return this.sendResponse(res, req, {
         message: "User Added!",
@@ -38,8 +37,8 @@ class Auth extends Response {
   };
   login = async (req, res) => {
     try {
-      const { username, password } = req.body;
-      const user = await UserModel.findOne({ username: username });
+      const { email, password } = req.body;
+      const user = await UserModel.findOne(email);
       let passMatch;
       if (user) {
         if (password) {
@@ -47,7 +46,7 @@ class Auth extends Response {
         }
       } else {
         return this.sendResponse(res, req, {
-          message: "No User exist with this username",
+          message: "No User exist with this email",
           status: 404,
         });
       }
@@ -57,7 +56,7 @@ class Auth extends Response {
           status: 404,
         });
       } else {
-        const token = jwt.sign({ username: username }, process.env.SECRET_KEY, {
+        const token = jwt.sign({ email: email }, process.env.SECRET_KEY, {
           expiresIn: "10m",
         });
         return this.sendResponse(res, req, {
@@ -102,11 +101,11 @@ class Auth extends Response {
           status: 400,
         });
       }
-      const token = jwt.sign(
-        { username: decoded.username },
-        process.env.SECRET_KEY,
-        { expiresIn: "20m" }
-      );
+      const token = jwt.sign({ email: decoded.email }, process.env.SECRET_KEY, {
+        expiresIn: "20m",
+      });
+      req.email = decoded.email;
+      console.log(token, decoded);
       req.token = token;
       next();
     } catch (err) {
@@ -117,7 +116,49 @@ class Auth extends Response {
       });
     }
   };
-
+  verify = async (req, res, next) => {
+    try {
+      const gettoken = req.headers.authorization?.split(" ")[1];
+      if (!gettoken) {
+        return this.sendResponse(res, req, {
+          message: "Token is Missing",
+          status: 403,
+        });
+      }
+      const decoded = jwt.verify(
+        gettoken,
+        process.env.SECRET_KEY,
+        (err, decoded) => {
+          if (err)
+            return {
+              error: err,
+              message: err,
+            };
+          return decoded;
+        }
+      );
+      if (decoded?.error) {
+        return this.sendResponse(res, req, {
+          message: "Unable to authorize!",
+          status: 400,
+        });
+      }
+      const token = jwt.sign({ email: decoded.email }, process.env.SECRET_KEY, {
+        expiresIn: "20m",
+      });
+      req.token = token;
+      return this.sendResponse(res, req, {
+        message: "Verified",
+        status: 200,
+      });
+    } catch (err) {
+      console.log(err);
+      return this.sendResponse(res, req, {
+        message: "Internal server error",
+        status: 202,
+      });
+    }
+  };
   forgotPassword = async (req, res) => {
     // Pass Genrator
     const generateRandomPassword = (length = 10) => {
@@ -161,7 +202,6 @@ class Auth extends Response {
       }
     };
     const { userEmail } = req.body.data;
-    console.log(userEmail);
     try {
       const user = await UserModel.findOne({ email: userEmail });
 
@@ -177,6 +217,65 @@ class Auth extends Response {
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "An error occurred" });
+    }
+  };
+  updatePassword = async (req, res) => {
+    const { currentPass, newPass, confirmPass, email } = req.body;
+    console.log(email);
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).send({
+          status: 404,
+          message: "The User with provided email is not found",
+          data: null,
+        });
+      } else {
+        if (!currentPass || !newPass || !confirmPass) {
+          return res.status(400).send({
+            status: 400,
+            message: "Please provide all the necessary details",
+            data: null,
+          });
+        } else {
+          if (newPass !== confirmPass) {
+            return res.status(404).send({
+              status: 404,
+              message: "New password and confirm password must be same",
+              data: null,
+            });
+          } else {
+            let passMatch = bcrypt.compare(currentPass, user.password);
+            if (!passMatch) {
+              return res.status(404).send({
+                status: 404,
+                message: "old password is not matching",
+                data: null,
+              });
+            } else {
+              await User.updateOne(
+                { email },
+                {
+                  $set: {
+                    password: await bcrypt.hash(newPass, 10),
+                  },
+                }
+              );
+              return res.status(201).send({
+                status: 201,
+                message: "user is updated",
+                data: user,
+              });
+            }
+          }
+        }
+      }
+    } catch {
+      return res.status(500).send({
+        status: 500,
+        message: "Internal Server Error",
+        data: null,
+      });
     }
   };
 }
