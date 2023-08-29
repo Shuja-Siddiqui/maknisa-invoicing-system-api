@@ -9,9 +9,8 @@ const invoiceModel = new mongoose.Schema(
       area: String,
       city: String,
       province: String,
-      country: String,
     },
-    estimate_time: String,
+    making_time: String,
     terms: String,
     discount: Number,
     completed: { type: Boolean, default: false },
@@ -19,7 +18,7 @@ const invoiceModel = new mongoose.Schema(
     items: [
       {
         description: String,
-        dimensions: String,
+        dimension: String,
         rate: Number,
         quantity: Number,
         price: Number,

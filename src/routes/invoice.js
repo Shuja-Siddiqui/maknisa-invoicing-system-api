@@ -3,7 +3,7 @@ const router = require("express").Router();
 const handler = new Invoice();
 
 router.post("/", handler.saveInvoice);
-router.put("/update-invoice", handler.updateInvoice);
+router.put("/update-invoice/:id", handler.updateInvoice);
 router.patch("/:id", handler.updateItemsArray);
 router.patch("/genrate-invoice/:id", handler.patchInvoice);
 router.put("/updateItem/:id", handler.updateItem);

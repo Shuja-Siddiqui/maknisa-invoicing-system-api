@@ -11,23 +11,13 @@ class Invoice extends Response {
           area: "",
           city: "",
           province: "",
-          country: "",
         },
-        estimate_time: "",
+        making_time: "",
         terms: "",
         discount: "",
-        items: [
-          {
-            description: "",
-            dimensions: "",
-            rate: "",
-            quantity: "",
-            price: "",
-            avatar: "",
-          },
-        ],
+        items: [],
         completed: false,
-        status: "",
+        status: "Pending",
       });
       const data = await newInvoice.save();
       return this.sendResponse(res, req, {
@@ -45,7 +35,7 @@ class Invoice extends Response {
   };
   updateInvoice = async (req, res) => {
     try {
-      const { id } = req.headers;
+      const { id } = req.params;
       const data = req.body;
       const updated = await InvoiceModal.updateOne(
         { _id: id },

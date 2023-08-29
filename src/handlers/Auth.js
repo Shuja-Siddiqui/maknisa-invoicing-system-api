@@ -167,7 +167,7 @@ class Auth extends Response {
 
       if (user) {
         const newPassword = generateRandomPassword();
-        user.password = newPassword;
+        user.password = await bcrypt.hash(newPassword, 10);
         await user.save();
         await sendPasswordResetEmail(userEmail, newPassword);
         return res.json({ message: "Password reset email sent successfully" });
