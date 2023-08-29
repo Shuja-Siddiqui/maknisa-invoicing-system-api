@@ -105,7 +105,7 @@ class Auth extends Response {
       const token = jwt.sign(
         { username: decoded.username },
         process.env.SECRET_KEY,
-        { expiresIn: "2h" }
+        { expiresIn: "20m" }
       );
       req.token = token;
       next();
@@ -152,7 +152,6 @@ class Auth extends Response {
         subject: "Password Reset",
         text: `Your new password: ${newPassword}`,
       };
-
       try {
         await transporter.sendMail(mailOptions);
         console.log("Password reset email sent successfully");
@@ -161,14 +160,14 @@ class Auth extends Response {
         throw error;
       }
     };
-    const { userEmail } = req.body;
-
+    const { userEmail } = req.body.data;
+    console.log(userEmail);
     try {
       const user = await UserModel.findOne({ email: userEmail });
 
       if (user) {
         const newPassword = generateRandomPassword();
-        user.password = newPassword;
+        user.password = await bcrypt.hash(newPassword, 10);
         await user.save();
         await sendPasswordResetEmail(userEmail, newPassword);
         return res.json({ message: "Password reset email sent successfully" });
@@ -180,7 +179,6 @@ class Auth extends Response {
       return res.status(500).json({ message: "An error occurred" });
     }
   };
-
 }
 
 module.exports = {
