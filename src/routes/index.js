@@ -5,6 +5,6 @@ const { invoice } = require("./invoice");
 const router = require("express").Router();
 const handler = new Auth();
 router.use("/auths", auths);
-router.use("/invoice", handler.refresh, invoice);
+router.use("/invoice", invoice);
 
 module.exports = { router };
