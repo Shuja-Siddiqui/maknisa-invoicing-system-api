@@ -13,7 +13,8 @@ class Invoice extends Response {
           province: "",
         },
         making_time: "",
-        terms: "",
+        terms:
+          "Foam quality<br />Master Molty Furniture to be delivered after construction completion of house Wood quality<br />Sheesham Wood Polish included Imported fabric on sofas same quality as pictures Cushions as per client demand Carriage will be paid by customer Mattress will not be included 50% payment in advance 30% before polish and poshish 20% before delivery",
         discount: "",
         items: [],
         completed: false,
@@ -63,42 +64,82 @@ class Invoice extends Response {
   updateItem = async (req, res) => {
     try {
       const { id } = req.params;
-      const { itemData } = req.body;
-
-      const existingInvoice = await InvoiceModal.findById(id);
-
-      if (!existingInvoice) {
+      const data = req.body;
+      const { index } = req.body;
+      if (!id) {
         return this.sendResponse(res, req, {
-          message: "Invoice not found",
-          status: 404,
+          status: 400,
+          message: "ID is required",
         });
       }
-
-      const itemIndex = existingInvoice.items.findIndex(
-        (item) => item._id.toString() === itemData._id
+      const invoice = await InvoiceModal.findById(id);
+      if (!invoice) {
+        return this.sendResponse(res, req, {
+          status: 404,
+          message: "Invoice not found",
+        });
+      }
+      const { items } = invoice;
+      items[index] = data;
+      const update = await InvoiceModal.updateOne(
+        { _id: id },
+        { $set: { items } }
       );
 
-      if (itemIndex === -1) {
+      if (update?.modifiedCount < 1) {
         return this.sendResponse(res, req, {
-          message: "Item not found in invoice",
-          status: 404,
+          status: 400,
+          message: "Failed to update items list",
         });
       }
-
-      const updateQuery = {
-        $set: {
-          [`items.${itemIndex}`]: {
-            ...existingInvoice.items[itemIndex],
-            ...itemData,
-          },
-        },
-      };
-
-      const updated = await InvoiceModal.updateOne({ _id: id }, updateQuery);
 
       return this.sendResponse(res, req, {
         status: 200,
-        data: updated,
+        message: "Updated items list",
+      });
+    } catch (err) {
+      console.log(err);
+      return this.sendResponse(res, req, {
+        message: "Error updating item in items array",
+        status: 500,
+        data: null,
+      });
+    }
+  };
+  deleteItem = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { index } = req.query;
+      if (!id) {
+        return this.sendResponse(res, req, {
+          status: 400,
+          message: "ID is required",
+        });
+      }
+      const invoice = await InvoiceModal.findById(id);
+      if (!invoice) {
+        return this.sendResponse(res, req, {
+          status: 404,
+          message: "Invoice not found",
+        });
+      }
+      const { items } = invoice;
+      console.log(index);
+      items.splice(index, 1);
+      const update = await InvoiceModal.updateOne(
+        { _id: id },
+        { $set: { items } }
+      );
+      if (update.modifiedCount < 1) {
+        return this.sendResponse(res, req, {
+          status: 400,
+          message: "Failed to update items list",
+        });
+      }
+
+      return this.sendResponse(res, req, {
+        status: 200,
+        message: "Updated items list",
       });
     } catch (err) {
       console.log(err);
