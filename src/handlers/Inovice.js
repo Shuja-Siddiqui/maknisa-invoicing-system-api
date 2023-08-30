@@ -14,8 +14,8 @@ class Invoice extends Response {
         },
         making_time: "",
         terms:
-          "Foam quality<br />Master Molty Furniture to be delivered after construction completion of house Wood quality<br />Sheesham Wood Polish included Imported fabric on sofas same quality as pictures Cushions as per client demand Carriage will be paid by customer Mattress will not be included 50% payment in advance 30% before polish and poshish 20% before delivery",
-        discount: "",
+          "Foam quality<br />Master Molty Furniture to be delivered after construction completion of house Wood quality<br />Sheesham Wood Polish included Imported fabric on sofas same quality as pictures<br /> Cushions as per client demand <br /> Carriage will be paid by customer <br />Mattress will not be included <br /> 50% payment in advance 30% before polish and poslish 20% before delivery",
+        discount: 0,
         items: [],
         completed: false,
         status: "Pending",
@@ -196,7 +196,6 @@ class Invoice extends Response {
   patchInvoice = async (req, res) => {
     try {
       const { id } = req.params;
-
       const updated = await InvoiceModal.updateOne(
         { _id: id },
         { $set: { completed: true } }
@@ -211,6 +210,41 @@ class Invoice extends Response {
         status: 200,
         data: updated,
       });
+    } catch (err) {
+      console.log(err);
+      return this.sendResponse(res, req, {
+        message: "Error Fetching Invoice",
+        status: 500,
+        data: null,
+      });
+    }
+  };
+
+  patchInvoiceStatus = async (req, res) => {
+    try {
+      const { invoiceData } = req.body;
+      const { invoiceStatus, statusId } = invoiceData;
+      if (invoiceStatus !== "undefined") {
+        const updatedStatus = await InvoiceModal.updateOne(
+          { _id: statusId },
+          {
+            $set: {
+              currentStatus: invoiceStatus,
+            },
+          }
+        );
+        if (updatedStatus.modifiedCount < 1) {
+          return this.sendResponse(res, req, {
+            message: "Failed to update status",
+            status: 400,
+          });
+        }
+
+        return this.sendResponse(res, req, {
+          status: 200,
+          data: updatedStatus,
+        });
+      }
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
