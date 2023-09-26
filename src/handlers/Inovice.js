@@ -12,9 +12,12 @@ class Invoice extends Response {
           city: "",
           province: "",
         },
+        category: "",
         making_time: "",
         terms:
           "Foam quality<br />Master Molty Furniture to be delivered after construction completion of house Wood quality<br />Sheesham Wood Polish included Imported fabric on sofas same quality as pictures<br /> Cushions as per client demand <br /> Carriage will be paid by customer <br />Mattress will not be included <br /> 50% payment in advance 30% before polish and poslish 20% before delivery",
+        payment: "",
+        price:0,
         discount: 0,
         items: [],
         completed: false,
