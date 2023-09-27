@@ -183,19 +183,20 @@ class Auth extends Response {
         port: 465,
         secure: true, // true for 465, false for other ports
         auth: {
-          user: "noreply@consoledot.com", // generated ethereal user
-          pass: "QWerTY@#$2", // generated ethereal password
+          user: process.env.EMAIL, // generated ethereal user
+          pass: process.env.MAIL_PASSWORD, // generated ethereal password
         },
       });
       const mailOptions = {
-        from: "noreply@consoledot.com",
+        from: process.env.EMAIL,
         to: userEmail,
         subject: "Password Reset",
         text: `Your new password: ${newPassword}`,
       };
       try {
-        await transporter.sendMail(mailOptions);
-        console.log("Password reset email sent successfully");
+        await transporter.sendMail(mailOptions).then(res => console.log(res));
+        console.log("Password reset email sent successfully to", userEmail);
+        console.log(process.env.EMAIL, userEmail);
       } catch (error) {
         console.error("Error sending password reset email:", error);
         throw error;
