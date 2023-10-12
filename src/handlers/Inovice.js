@@ -1,38 +1,39 @@
-const Response = require("./Response");
-const { InvoiceModal } = require("../models");
-
+const Response = require('./Response');
+const { InvoiceModal } = require('../models');
+const sharp = require('sharp');
+const { Image } = require('../models/images.model');
 class Invoice extends Response {
   saveInvoice = async (req, res) => {
     try {
       const newInvoice = new InvoiceModal({
-        client_name: "",
+        client_name: '',
         location: {
-          details: "",
-          area: "",
-          city: "",
-          province: "",
+          details: '',
+          area: '',
+          city: '',
+          province: '',
         },
-        category: "",
-        making_time: "",
+        category: '',
+        making_time: '',
         terms:
-          "Foam quality<br />Master Molty Furniture to be delivered after construction completion of house Wood quality<br />Sheesham Wood Polish included Imported fabric on sofas same quality as pictures<br /> Cushions as per client demand <br /> Carriage will be paid by customer <br />Mattress will not be included <br /> 50% payment in advance 30% before polish and poslish 20% before delivery",
-        payment: "",
-        price:0,
+          'Foam quality<br />Master Molty Furniture to be delivered after construction completion of house Wood quality<br />Sheesham Wood Polish included Imported fabric on sofas same quality as pictures<br /> Cushions as per client demand <br /> Carriage will be paid by customer <br />Mattress will not be included <br /> 50% payment in advance 30% before polish and poslish 20% before delivery',
+        payment: '',
+        price: 0,
         discount: 0,
         items: [],
         completed: false,
-        status: "Pending",
+        status: 'Pending',
       });
       const data = await newInvoice.save();
       return this.sendResponse(res, req, {
-        message: "Invoice Saved",
+        message: 'Invoice Saved',
         status: 201,
         data,
       });
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Internal server error",
+        message: 'Internal server error',
         status: 500,
       });
     }
@@ -47,7 +48,7 @@ class Invoice extends Response {
       );
       if (updated.modifiedCount < 1) {
         return this.sendResponse(res, req, {
-          message: "Failed to update",
+          message: 'Failed to update',
           status: 400,
         });
       }
@@ -58,7 +59,7 @@ class Invoice extends Response {
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error Fetching Invoice",
+        message: 'Error Fetching Invoice',
         status: 500,
         data: null,
       });
@@ -72,14 +73,14 @@ class Invoice extends Response {
       if (!id) {
         return this.sendResponse(res, req, {
           status: 400,
-          message: "ID is required",
+          message: 'ID is required',
         });
       }
       const invoice = await InvoiceModal.findById(id);
       if (!invoice) {
         return this.sendResponse(res, req, {
           status: 404,
-          message: "Invoice not found",
+          message: 'Invoice not found',
         });
       }
       const { items } = invoice;
@@ -92,18 +93,18 @@ class Invoice extends Response {
       if (update?.modifiedCount < 1) {
         return this.sendResponse(res, req, {
           status: 400,
-          message: "Failed to update items list",
+          message: 'Failed to update items list',
         });
       }
 
       return this.sendResponse(res, req, {
         status: 200,
-        message: "Updated items list",
+        message: 'Updated items list',
       });
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error updating item in items array",
+        message: 'Error updating item in items array',
         status: 500,
         data: null,
       });
@@ -116,14 +117,14 @@ class Invoice extends Response {
       if (!id) {
         return this.sendResponse(res, req, {
           status: 400,
-          message: "ID is required",
+          message: 'ID is required',
         });
       }
       const invoice = await InvoiceModal.findById(id);
       if (!invoice) {
         return this.sendResponse(res, req, {
           status: 404,
-          message: "Invoice not found",
+          message: 'Invoice not found',
         });
       }
       const { items } = invoice;
@@ -136,18 +137,18 @@ class Invoice extends Response {
       if (update.modifiedCount < 1) {
         return this.sendResponse(res, req, {
           status: 400,
-          message: "Failed to update items list",
+          message: 'Failed to update items list',
         });
       }
 
       return this.sendResponse(res, req, {
         status: 200,
-        message: "Updated items list",
+        message: 'Updated items list',
       });
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error updating item in items array",
+        message: 'Error updating item in items array',
         status: 500,
         data: null,
       });
@@ -157,40 +158,67 @@ class Invoice extends Response {
     try {
       const { id } = req.params;
       const { addedItems } = req.body; // Assuming your request body contains an array of items
-
+      const avatar = req.files ? req.files.avatar : null;
       // Find the invoice by its ID
+
       const existingInvoice = await InvoiceModal.findById(id);
 
       if (!existingInvoice) {
         return this.sendResponse(res, req, {
-          message: "Invoice not found",
+          message: 'Invoice not found',
           status: 404,
         });
       }
 
       const { items } = existingInvoice;
       // Push the new items to the existing items array
-      items.push(addedItems);
-      const updateExisting = await InvoiceModal.updateOne(
-        { _id: id },
-        { $set: { items } }
-      );
-
-      // Save the updated invoice document
-      // const updatedInvoice = await existingInvoice.save();
-      if (updateExisting.modifiedCount > 0)
-        return this.sendResponse(res, req, {
-          status: 200,
-          message: "Item added",
+      if (avatar) {
+        const temp = await sharp(avatar.data).webp({ quality: 20 }).toBuffer();
+        const newImage = new Image({
+          mimetype: avatar.mimetype,
+          data: temp,
+          name: `${Date.now()}-${avatar.name}`,
         });
-      return this.sendResponse(res, req, {
-        status: 400,
-        message: "Failed to update",
-      });
+        const saveImage = await newImage.save();
+        items.push({
+          ...JSON.parse(addedItems),
+          image: saveImage?._id,
+        });
+        const updateExisting = await InvoiceModal.updateOne(
+          { _id: id },
+          { $set: { items } }
+        );
+        if (updateExisting.modifiedCount > 0)
+          return this.sendResponse(res, req, {
+            status: 200,
+            message: 'Item added',
+          });
+        return this.sendResponse(res, req, {
+          status: 400,
+          message: 'Failed to update',
+        });
+      } else {
+        items.push({
+          ...JSON.parse(addedItems),
+        });
+        const updateExisting = await InvoiceModal.updateOne(
+          { _id: id },
+          { $set: { items } }
+        );
+        if (updateExisting.modifiedCount > 0)
+          return this.sendResponse(res, req, {
+            status: 200,
+            message: 'Item added',
+          });
+        return this.sendResponse(res, req, {
+          status: 400,
+          message: 'Failed to update',
+        });
+      }
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error updating items array",
+        message: 'Error updating items array',
         status: 500,
         data: null,
       });
@@ -205,7 +233,7 @@ class Invoice extends Response {
       );
       if (updated.modifiedCount < 1) {
         return this.sendResponse(res, req, {
-          message: "Failed to update",
+          message: 'Failed to update',
           status: 400,
         });
       }
@@ -216,7 +244,7 @@ class Invoice extends Response {
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error Fetching Invoice",
+        message: 'Error Fetching Invoice',
         status: 500,
         data: null,
       });
@@ -227,7 +255,7 @@ class Invoice extends Response {
     try {
       const { invoiceData } = req.body;
       const { invoiceStatus, statusId } = invoiceData;
-      if (invoiceStatus !== "undefined") {
+      if (invoiceStatus !== 'undefined') {
         const updatedStatus = await InvoiceModal.updateOne(
           { _id: statusId },
           {
@@ -238,7 +266,7 @@ class Invoice extends Response {
         );
         if (updatedStatus.modifiedCount < 1) {
           return this.sendResponse(res, req, {
-            message: "Failed to update status",
+            message: 'Failed to update status',
             status: 400,
           });
         }
@@ -251,7 +279,7 @@ class Invoice extends Response {
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error Fetching Invoice",
+        message: 'Error Fetching Invoice',
         status: 500,
         data: null,
       });
@@ -263,14 +291,14 @@ class Invoice extends Response {
         updatedAt: -1,
       });
       return this.sendResponse(res, req, {
-        message: "All Completed Invoices Fetched",
+        message: 'All Completed Invoices Fetched',
         status: 201,
         invoices,
       });
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error Fetching Invoices",
+        message: 'Error Fetching Invoices',
         status: 500,
         data: null,
       });
@@ -282,14 +310,14 @@ class Invoice extends Response {
         updatedAt: -1,
       });
       return this.sendResponse(res, req, {
-        message: "All Drafts Invoices Fetched",
+        message: 'All Drafts Invoices Fetched',
         status: 201,
         data: invoices,
       });
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error Fetching Drafts",
+        message: 'Error Fetching Drafts',
         status: 500,
         data: null,
       });
@@ -302,21 +330,21 @@ class Invoice extends Response {
 
       if (!invoice) {
         return this.sendResponse(res, {
-          message: "Invoice not found",
+          message: 'Invoice not found',
           status: 404,
           data: null,
         });
       }
 
       return this.sendResponse(res, req, {
-        message: "Invoice Fetched Successfully",
+        message: 'Invoice Fetched Successfully',
         status: 200,
         data: invoice,
       });
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error Fetching Invoice",
+        message: 'Error Fetching Invoice',
         status: 500,
         data: null,
       });
@@ -329,21 +357,21 @@ class Invoice extends Response {
 
       if (!invoice) {
         return this.sendResponse(res, req, {
-          message: "Invoice not found",
+          message: 'Invoice not found',
           status: 404,
           data: null,
         });
       }
 
       return this.sendResponse(res, req, {
-        message: "Invoice Deleted Successfully",
+        message: 'Invoice Deleted Successfully',
         status: 200,
         invoice,
       });
     } catch (err) {
       console.log(err);
       return this.sendResponse(res, req, {
-        message: "Error Fetching Invoice",
+        message: 'Error Fetching Invoice',
         status: 500,
         data: null,
       });
