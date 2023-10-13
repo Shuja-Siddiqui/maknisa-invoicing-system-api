@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const counterSchema = new mongoose.Schema({
   name: String,
   lastUsedId: Number,
 });
 
-const Counter = mongoose.model('Counter', counterSchema);
+const Counter = mongoose.model("Counter", counterSchema);
 const invoiceModel = new mongoose.Schema(
   {
     client_name: String,
@@ -22,11 +22,14 @@ const invoiceModel = new mongoose.Schema(
     price: Number,
     discount: Number,
     completed: { type: Boolean, default: false },
-    currentStatus: { type: String, default: 'Pending' },
+    currentStatus: { type: String, default: "Pending" },
     items: [
       {
         description: String,
-        dimension: String,
+        dimension: {
+          type: String,
+          required: false,
+        },
         rate: Number,
         quantity: Number,
         price: { type: Number, default: 0 },
@@ -42,10 +45,10 @@ const invoiceModel = new mongoose.Schema(
   }
 );
 
-invoiceModel.pre('save', async function (next) {
+invoiceModel.pre("save", async function (next) {
   if (!this.invoice_id) {
     let counter = await Counter.findOneAndUpdate(
-      { name: 'invoice' },
+      { name: "invoice" },
       { $inc: { lastUsedId: 1 } },
       { new: true, upsert: true }
     );
@@ -56,6 +59,6 @@ invoiceModel.pre('save', async function (next) {
   next();
 });
 
-const InvoiceModal = mongoose.model('Invoice', invoiceModel);
+const InvoiceModal = mongoose.model("Invoice", invoiceModel);
 
 module.exports = InvoiceModal;
