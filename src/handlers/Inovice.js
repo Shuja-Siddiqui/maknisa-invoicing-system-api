@@ -23,6 +23,7 @@ class Invoice extends Response {
         items: [],
         completed: false,
         status: 'Pending',
+        currency_type: ""
       });
       const data = await newInvoice.save();
       return this.sendResponse(res, req, {

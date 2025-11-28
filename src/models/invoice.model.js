@@ -16,6 +16,7 @@ const invoiceModel = new mongoose.Schema(
       province: String,
     },
     category: String,
+    currency_type: String,
     making_time: String,
     terms: String,
     payment: String,
