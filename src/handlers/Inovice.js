@@ -12,6 +12,7 @@ class Invoice extends Response {
           area: '',
           city: '',
           province: '',
+          location:''
         },
         category: '',
         making_time: '',
