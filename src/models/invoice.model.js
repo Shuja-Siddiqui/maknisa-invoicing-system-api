@@ -34,6 +34,7 @@ const invoiceModel = new mongoose.Schema(
         },
         rate: Number,
         quantity: Number,
+        category: String,
         price: { type: Number, default: 0 },
         image: {
           type: String,
