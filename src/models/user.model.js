@@ -2,9 +2,14 @@ const mongoose = require("mongoose");
 
 const userModel = new mongoose.Schema(
   {
-    username: String,
+    name: String,
     password: String,
     email: String,
+    role: {
+      type: String,
+      enum: ["Admin", "User",],
+      default: "User",
+    },
   },
   { timestamps: true }
 );

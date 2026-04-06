@@ -24,7 +24,8 @@ class Invoice extends Response {
         items: [],
         completed: false,
         status: 'Pending',
-        currency_type: ""
+        currency_type: "",
+        createdBy:""
       });
       const data = await newInvoice.save();
       return this.sendResponse(res, req, {

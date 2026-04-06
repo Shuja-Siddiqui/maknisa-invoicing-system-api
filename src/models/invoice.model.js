@@ -23,6 +23,7 @@ const invoiceModel = new mongoose.Schema(
     payment: String,
     price: Number,
     discount: Number,
+    createdBy:String,
     completed: { type: Boolean, default: false },
     currentStatus: { type: String, default: "Pending" },
     items: [
