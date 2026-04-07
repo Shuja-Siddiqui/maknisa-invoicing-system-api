@@ -9,13 +9,14 @@ const User = require("../models/user.model");
 class Auth extends Response {
   registerUSer = async (req, res) => {
     try {
-      const { email, password, userEmail } = req.body;
+      const { email, password, name, role } = req.body;
 
       const hashPassword = await bcrypt.hash(password, 10);
       const user = new UserModel({
         email: email,
         password: hashPassword,
-        email: userEmail,
+        name: name,
+        role: role
       });
       await user.save();
       const token = jwt.sign({ email: user.email }, process.env.SECRET_KEY, {
@@ -38,7 +39,9 @@ class Auth extends Response {
   login = async (req, res) => {
     try {
       const { email, password } = req.body;
-      const user = await UserModel.findOne(email);
+
+      const user = await UserModel.findOne({ email });
+
       let passMatch;
       if (user) {
         if (password) {
@@ -276,6 +279,101 @@ class Auth extends Response {
         status: 500,
         message: "Internal Server Error",
         data: null,
+      });
+    }
+  };
+  getUsers = async (req, res) => {
+    try {
+      const users = await User.find().sort({
+        updatedAt: -1,
+      });
+      return this.sendResponse(res, req, {
+        message: 'All Completed Users Fetched',
+        status: 201,
+        users,
+      });
+    } catch (err) {
+      console.log(err);
+      return this.sendResponse(res, req, {
+        message: 'Error Fetching Users',
+        status: 500,
+        data: null,
+      });
+    }
+  };
+  updateUser = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, email, role, newpassword } = req.body;
+
+      const user = await UserModel.findById(id);
+
+      if (!user) {
+        return this.sendResponse(res, req, {
+          message: "User not found",
+          status: 404,
+        });
+      }
+
+      // 🔄 Direct password update (no old password required)
+      if (newpassword) {
+        const hashedNewPassword = await bcrypt.hash(newpassword, 10);
+        user.password = hashedNewPassword;
+      }
+
+      // 📝 Update other fields
+      if (name) user.name = name;
+      if (email) user.email = email;
+      if (role) user.role = role;
+
+      await user.save();
+
+      // ❌ remove sensitive fields
+      const userData = user.toObject();
+      delete userData.password;
+      delete userData.__v;
+
+      return this.sendResponse(res, req, {
+        message: "User updated successfully",
+        data: userData,
+        status: 200,
+      });
+
+    } catch (err) {
+      console.log(err);
+      return this.sendResponse(res, req, {
+        message: "Internal server error",
+        data: err,
+        status: 500,
+      });
+    }
+  };
+  deleteUser = async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const user = await UserModel.findById(id);
+
+      if (!user) {
+        return this.sendResponse(res, req, {
+          message: "User not found",
+          status: 404,
+        });
+      }
+
+      await UserModel.findByIdAndDelete(id);
+
+      return this.sendResponse(res, req, {
+        message: "User deleted successfully",
+        status: 200,
+      });
+
+    } catch (err) {
+      console.log(err);
+      return this.sendResponse(res, req, {
+        message: "Internal server error",
+        data: err,
+        status: 500,
       });
     }
   };

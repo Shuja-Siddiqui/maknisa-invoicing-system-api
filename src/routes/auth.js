@@ -7,6 +7,9 @@ router.post("/login", handler.login);
 router.post("/forget-password", handler.forgotPassword);
 router.post("/update-password", handler.refresh, handler.updatePassword);
 router.get("/verify", handler.verify);
+router.get("/", handler.getUsers);
+router.put("/:id", handler.updateUser);
+router.delete("/:id", handler.deleteUser);
 
 module.exports = {
   auths: router,
